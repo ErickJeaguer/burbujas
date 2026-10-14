@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0284c7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Burbujas Sonoras: Conciencia Fonológica</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Lienzo interactivo a 60 FPS para burbujas, escenarios y partículas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Capa superior del HUD (DOM Overlay sincronizado con Canvas) -->
+  <div id="hudOverlay">
+    <header class="hud-topbar">
+      <!-- Izquierda: Tarjeta de objetivo fonológico actual y botón de repetición de voz -->
+      <div class="hud-left">
+        <div id="hudTargetCard" class="hud-target-card" title="Objetivo actual">
+          <img id="hudTargetIcon" class="hud-target-icon" alt="Objetivo" src="">
+          <span id="hudTargetLabel" class="hud-target-label">A</span>
+        </div>
+        <button id="btnRepeatVoice" class="hud-btn" aria-label="Repetir instrucción" title="Escuchar de nuevo">
+          <svg class="hud-btn-icon" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Centro: Barra de 5 Estrellas Progresivas -->
+      <div class="hud-center">
+        <div class="star-bar" aria-label="Progreso de estrellas">
+          <div class="star-slot" data-index="0">
+            <svg viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="star-slot" data-index="1">
+            <svg viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="star-slot" data-index="2">
+            <svg viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="star-slot" data-index="3">
+            <svg viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="star-slot" data-index="4">
+            <svg viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Derecha: Selector discreto de mundo -->
+      <div class="hud-right">
+        <button id="btnWorldSelector" class="hud-btn" title="Cambiar de mundo">
+          <svg class="hud-btn-icon" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span id="hudWorldName">M1: Arrecife</span>
+        </button>
+      </div>
+    </header>
+  </div>
+
+  <!-- Pantalla de Inicio (INTRO_STATE: Botón dorado gigante que desbloquea audio) -->
+  <div id="startScreen" class="overlay-screen">
+    <div class="start-card">
+      <h1 class="start-title">Burbujas Sonoras</h1>
+      <p class="start-subtitle">Conciencia Fonológica y Reflejos para Preescolar</p>
+
+      <!-- Botón Gigante Pulsante -->
+      <button id="btnPlay" class="btn-play-giant" aria-label="Jugar ahora">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="#78350f">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>¡JUGAR!</span>
+      </button>
+
+      <!-- Selector de Mundo en Pantalla Inicial -->
+      <div class="world-selector-title">Selecciona un Mundo:</div>
+      <div class="world-buttons-grid">
+        <button class="world-select-btn selected" data-world="1">
+          <span class="world-badge">Mundo 1</span>
+          <span class="world-btn-title">El Arrecife</span>
+          <span class="world-btn-age">3 Años (Sonidos)</span>
+        </button>
+        <button class="world-select-btn" data-world="2">
+          <span class="world-badge">Mundo 2</span>
+          <span class="world-btn-title">La Laguna</span>
+          <span class="world-btn-age">4 Años (Vocales)</span>
+        </button>
+        <button class="world-select-btn" data-world="3">
+          <span class="world-badge">Mundo 3</span>
+          <span class="world-btn-title">El Bosque</span>
+          <span class="world-btn-age">5 Años (Sílabas)</span>
+        </button>
+      </div>
+
+      <!-- Botón de ajustes -->
+      <button id="btnOpenSettings" class="btn-settings-link" title="Abrir ajustes">⚙️ Ajustes</button>
+    </div>
+  </div>
+
+  <!-- Modal Ajustes (Solo cambiar a Voz 1 o Voz 2) -->
+  <div id="settingsModal" class="overlay-screen hidden">
+    <div class="modal-card" style="max-width: 380px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Ajustes</h3>
+        <button id="btnCloseSettings" class="btn-close-modal" aria-label="Cerrar ajustes">&times;</button>
+      </div>
+      <p style="font-size: 0.95rem; color: #475569; text-align: left;">
+        Elige la voz que acompañará al niño en sus misiones:
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin: 8px 0;">
+        <button class="voice-choice-btn btn-voice-choice" data-voice="1" style="padding: 14px; font-size: 1.05rem;">
+          🌸 Voz 1 (Dulce y cariñosa)
+        </button>
+        <button class="voice-choice-btn btn-voice-choice active" data-voice="2" style="padding: 14px; font-size: 1.05rem;">
+          ⭐ Voz 2 (Alegre y animada)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pantalla de Presentación (BRIEFING_STATE: Muestra objetivo por 3 segundos) -->
+  <div id="briefingOverlay" class="overlay-screen hidden">
+    <div class="briefing-card">
+      <img id="briefingImage" class="briefing-image" alt="Objetivo" src="">
+      <h2 id="briefingText" class="briefing-title">A</h2>
+      <p id="briefingSubText" class="briefing-subtitle">¡Busca todo lo que empiece con A!</p>
+    </div>
+  </div>
+
+  <!-- Pantalla de Celebración de Nivel (CELEBRATION_STATE: Fiesta arcoíris de 5 estrellas) -->
+  <div id="celebrationOverlay" class="overlay-screen hidden">
+    <div class="celebration-card">
+      <h2 class="celebration-title">¡FIESTA ARCOÍRIS!</h2>
+      <p class="celebration-sub">¡Completaste las 5 estrellas!</p>
+      <p style="font-size: 1.1rem; color: #64748b; font-weight: 700;">¡Explota todas las burbujas que quieras!</p>
+    </div>
+  </div>
+
+  <!-- Modal Selector de Mundos (Accesible durante el juego desde el botón del HUD) -->
+  <div id="worldModal" class="overlay-screen hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Elegir Mundo</h3>
+        <button id="btnCloseWorldModal" class="btn-close-modal" aria-label="Cerrar modal">&times;</button>
+      </div>
+      <div class="world-buttons-grid">
+        <button class="world-select-btn" data-world="1">
+          <span class="world-badge">Mundo 1</span>
+          <span class="world-btn-title">El Arrecife de los Sonidos</span>
+          <span class="world-btn-age">3 Años &bull; Onomatopeyas</span>
+        </button>
+        <button class="world-select-btn" data-world="2">
+          <span class="world-badge">Mundo 2</span>
+          <span class="world-btn-title">La Laguna de las Vocales</span>
+          <span class="world-btn-age">4 Años &bull; Vocales A, E, I, O, U</span>
+        </button>
+        <button class="world-select-btn" data-world="3">
+          <span class="world-badge">Mundo 3</span>
+          <span class="world-btn-title">El Bosque de las Sílabas</span>
+          <span class="world-btn-age">5 Años &bull; Conciencia silábica</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts Secuenciales (Compatibilidad local directa file:// sin problemas de CORS) -->
+  <script src="src/data.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/entities.js"></script>
+  <script src="src/spawner.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>
